@@ -1,40 +1,72 @@
-function getWeather() {
-    const locationInput = document.getElementById('location');
-    const location = locationInput.value;
+document.addEventListener("DOMContentLoaded", function() {
+    const grid = document.getElementById("grid");
+    const status = document.getElementById("status");
+    const resetBtn = document.getElementById("resetBtn");
 
-    if (location === '') {
-        alert('Please enter a location.');
-        return;
+    let currentPlayer = "X";
+    let gameBoard = ["", "", "", "", "", "", "", "", ""]; // Represents the 3x3 game board
+
+    // Function to handle cell clicks
+    function handleCellClick(index) {
+        if (gameBoard[index] === "" && !checkWinner()) {
+            gameBoard[index] = currentPlayer;
+            render();
+            if (checkWinner()) {
+                status.innerHTML = `Player ${currentPlayer} wins!`;
+            } else if (!gameBoard.includes("")) {
+                status.innerHTML = "It's a tie!";
+            } else {
+                currentPlayer = currentPlayer === "X" ? "O" : "X";
+                status.innerHTML = `Player ${currentPlayer}'s turn`;
+            }
+        }
     }
 
-    const apiKey = 'YOUR_OPENWEATHERMAP_API_KEY';
-    const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${location}&appid=${apiKey}&units=metric`;
+    // Function to check for a winner
+    function checkWinner() {
+        const winPatterns = [
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8], // Rows
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8], // Columns
+            [0, 4, 8],
+            [2, 4, 6] // Diagonals
+        ];
 
-    fetch(apiUrl)
-        .then(response => response.json())
-        .then(data => {
-            displayWeather(data);
-        })
-        .catch(error => {
-            console.error('Error fetching weather data:', error);
-            alert('Error fetching weather data. Please try again.');
+        for (const pattern of winPatterns) {
+            const [a, b, c] = pattern;
+            if (gameBoard[a] && gameBoard[a] === gameBoard[b] && gameBoard[a] === gameBoard[c]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Function to reset the game
+    function resetGame() {
+        currentPlayer = "X";
+        gameBoard = ["", "", "", "", "", "", "", "", ""];
+        render();
+        status.innerHTML = "Player X's turn";
+    }
+
+    // Function to render the game board
+    function render() {
+        grid.innerHTML = "";
+        gameBoard.forEach((value, index) => {
+            const cell = document.createElement("div");
+            cell.classList.add("cell");
+            cell.innerHTML = value;
+            cell.addEventListener("click", () => handleCellClick(index));
+            grid.appendChild(cell);
         });
-}
+    }
 
-function displayWeather(data) {
-    const weatherInfoContainer = document.getElementById('weather-info');
-    weatherInfoContainer.innerHTML = '';
+    // Event listener for the reset button
+    resetBtn.addEventListener("click", resetGame);
 
-    const cityName = data.name;
-    const temperature = data.main.temp;
-    const description = data.weather[0].description;
-
-    const weatherInfo = document.createElement('div');
-    weatherInfo.innerHTML = `
-        <h2>${cityName}</h2>
-        <p>Temperature: ${temperature} &#8451;</p>
-        <p>Condition: ${description}</p>
-    `;
-
-    weatherInfoContainer.appendChild(weatherInfo);
-}
+    // Initial game render
+    render();
+});
